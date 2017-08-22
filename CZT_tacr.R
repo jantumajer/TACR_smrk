@@ -14,6 +14,9 @@ SLT.rajon <- (readXL("C:/honzaT/TACR_smrk/CZT/CT_SLT_20160912.xlsx", rownames=FA
 merge.SLT <- merge(SLT, SLT.rajon, by.x="SLTcombined", by.y="SLT", all.x=TRUE)
 merge <- merge(Dataset, merge.SLT[,c("IDPLOTS","Rajonizace")], by="IDPLOTS", all.x=TRUE)
 
+Souradnice <- read.table("C:/honzaT/TACR_smrk/CZT/CZT_souradnice.csv", header=TRUE, sep=",", na.strings="NA", dec=".", strip.white=TRUE) # Souradnice ploch v S-JTSK
+merge <- merge(merge, Souradnice[,c("IDPLOTS", "X", "Y")], by="IDPLOTS", all.x=TRUE)
+
 ### Pouze stromy s BAI > 0
 ######################################
 CBAI_0 <- subset(merge, subset=CBAI>0)
@@ -25,7 +28,7 @@ Hist(CBAI_0$CBAI, scale="frequency", breaks="Sturges", col="darkgray")
 
 ### Prejmenovani promennych
 ########################################
-names(CBAI_0)[c(198,146,60,100,99,12)] <- c("BAL","BAI","Ndep","SRAZKY","TEPLOTA","DBH")
+names(CBAI_0)[c(26,198,146,60,100,99,12)] <- c("ALTITUDE","BAL","BAI","Ndep","SRAZKY","TEPLOTA","DBH")
 
 
 ### Konverze veku a nadmorske vysky na faktory
@@ -35,13 +38,18 @@ CBAI_0 <- within(CBAI_0, {AGE20YEARS <- factor(AGE20YEARS, labels=c('a1','a2','a
 			  RAJONIZACE <- factor(Rajonizace, labels=c('1','2','3',"4"))
 			  })
 
-###
+##### Test modelu pro stromy rostouci rychleji nez 40 cm2/rok
+# CBAI_0 <- subset(CBAI_0, subset=(subset=(BAI>40)))
+
 
 LM.czt <- lm(BAI ~ 1 + AGE20YEARS + DBH + ALTITUDECLASS : SRAZKY + ALTITUDECLASS : TEPLOTA + BAL + RAJONIZACE : Ndep, data=CBAI_0)
 
 summary(LM.czt)
 vif(LM.czt)
 calc.relimp(LM.czt, rela=T)
+
+plot(CBAI_0$BAI ~ CBAI_0$NTREESPERHA)
+names(CBAI_0)
 
 par(mfrow=c(2,2))
 plot(residuals(LM.czt) ~ CBAI_0$BAI, xlim=c(0,100), ylim=c(-60,60)); abline(0,0, col="red")
@@ -69,7 +77,7 @@ KRNAP <- readXL("C:/honzaT/TACR_smrk/KRNAP_monbase/KRNAP.xlsx", rownames=FALSE, 
 KRNAP_dbh <- subset(KRNAP, subset=((X15_DBH>0) & (X03_DBH>0) & (X15_DBH>X03_DBH) & (X15_DBH-X03_DBH<200)), select=c(IDPlots, IDTrees, X03_DBH,X15_DBH))
 KRNAP_h <- subset(KRNAP, subset=((X15_H>0) & (X03_H>0) & (X15_H>X03_H) & (X15_H-X03_H<8)), select=c(IDPlots, IDTrees, X03_H,X15_H))
 
-KRNAP_dbh$X03_15_DBH <- with(KRNAP_dbh, (X15_DBH - X03_DBH)/100 ) # Prevedeno na cm
+KRNAP_dbh$X03_15_DBH <- with(KRNAP_dbh, (X15_DBH - X03_DBH)/10 ) # Prevedeno na cm
 KRNAP_h$X03_15_H <- with(KRNAP_h, X15_H - X03_H)
 
 ### Vypocet BAI/rok mezi lety 2003 a 2015
@@ -110,10 +118,9 @@ KRNAP <- merge(KRNAP, output, by=c("IDPlots", "IDTrees"), all.x=TRUE)
 
 ### Prejmenovani promennych
 ########################################
-names(KRNAP)[c(331,334,328,329,327,333)] <- c("BAI","BAL","Ndep","SRAZKY","TEPLOTA","DBH")
+names(KRNAP)[c(333,336,328,329,327,335)] <- c("BAI","BAL","Ndep","SRAZKY","TEPLOTA","DBH")
 
-###
-KRNAP.an <- subset(KRNAP, subset=(!is.na(BAI)))
+KRNAP.an <- subset(KRNAP, subset=(!is.na(BAI) & X15_zlom==0 & X15_souse==0)) # Vyberu jenom stromy, ktere maji vypocteny prirust a nejsou souse nebo recentni zlom
 
 LM.krnap <- lm(BAI ~ 1 + AGE20YEARS + DBH + ALTITUDECLASS : SRAZKY + ALTITUDECLASS : TEPLOTA + BAL + RAJONIZACE : Ndep, data=KRNAP.an)
 summary(LM.krnap)
@@ -160,6 +167,11 @@ LPB_Young <- merge(LPB_Young.10, LPB_Young.13, by=c("IDPlots", "ID"), all=T, suf
 
 #############
 
+LPB_Young <- subset(LPB_Young, subset=(Zlom.13==100 & Souse.13==100))
+LPB_Old <- subset(LPB_Old, subset=(Zlom.13==100 & Souse.13==100))
+
+#############
+
 vyber.promennych.Old <- c("IDPlots", "ID", "DBH_mm.10", "H_m.10", "DBH_mm.12", "H_m.12", "DBH_mm.13", "H_m.13", "Drevina.10", "Vek.10", "Vek.12", "Vek.13") 
 vyber.promennych.Young <- c("IDPlots", "ID", "DBH_mm.10", "H_m.10", "DBH_mm.13", "H_m.13", "Drevina.10", "Vek.10", "Vek.13")
 
@@ -178,8 +190,6 @@ LPB <- merge(LPB, LPB.plot.level, by.x="IDPlots", by.y="ID", all.x=T)
 #############
 
 LPB.an <- subset(LPB, subset= (!is.na(DBH_mm.10) & !is.na(DBH_mm.13) & Drevina.10==1 & (DBH_mm.10 < DBH_mm.13) )) # Do analyzy vstoupi pouze smrky, ktere maji zmerene DBH v letech 2013 a 2011
-	### !!! Temer 300 stromu (1417-1162) bylo vyfiltrovano na kriteriu, ze musi mit kladny prirust
-
 
 ### Vypocet BAI/rok mezi lety 2003 a 2015
 LPB.an$BAI_10.13 <- with(LPB.an, ( (pi*(DBH_mm.13/2)^2) - (pi*(DBH_mm.10/2)^2) )/3)
@@ -210,7 +220,7 @@ LPB.an <- merge(LPB.an, output, by=c("IDPlots", "ID"), all.x=TRUE)
 
 ### Prejmenovani promennych
 ########################################
-names(LPB.an)[c(22,24,17,18,15,5)] <- c("BAI","BAL","Ndep","SRAZKY","TEPLOTA","DBH")
+names(LPB.an)[c(22,24,17,18,15,16,5)] <- c("BAI","BAL","Ndep","SRAZKY","TEPLOTA","ALTITUDE","DBH")
 
 ### Prevod Rajonizace ze spojite promenne na faktor, prevody jednotek BAI (mm2->cm2) a DBH (mm->cm)
 ##################################################
@@ -246,18 +256,66 @@ cor(predict(LM.lasprobes) , LPB.an$BAI, use="complete")
 cor(predict(LM.czt, newdata=LPB.an) , LPB.an$BAI, use="complete")
 
 
+################################################################################
+### Vypocet celkove throughfall depozice podle Oulehle et al. (2016) a Kopacek et al. (2012)
+################################################################################
+
+DEPOZICE(LPB.an)
+KRNAP.an <- DEPOZICE(KRNAP.an, prepsat=T)
+CBAI_0$SRAZKY <- CBAI_0$ANN_SRA; DEPOZICE(CBAI_0)
+
+
+
+DEPOZICE <- function(oblast, prepsat=F) {
+oblast[,"c.so4"] <- NA; oblast[,"c.no3"] <- NA; oblast[,"c.nh4"] <- NA
+print("Krok 1 - vypocet bulk koncentraci iontu ve srazkove vode")
+
+for (i in c(1:nrow(oblast))) {
+	if (oblast[i,"ALTITUDE"]>0) {oblast[i,"c.so4"] <- 10*exp(4.321 + 1.093e-4*oblast[i,"ALTITUDE"] - 3.24e-4*oblast[i,"SRAZKY"] + 9.541e-7*oblast[i,"Y"] + 1.607e-6*oblast[i,"X"])
+				    oblast[i,"c.no3"] <- 10*exp(1.123 + 5.156e-3*oblast[i,"c.so4"] - 2.643e-7*oblast[i,"Y"])
+				    oblast[i,"c.nh4"] <- 10*exp(0.316 -6.733e-5*oblast[i,"SRAZKY"] + 7.505e-3*oblast[i,"c.so4"] - 4.950e-7*oblast[i,"Y"] - 6.026e-7*oblast[i,"X"])}
+
+		}
+
+oblast[,"bulk.sdep"] <- NA; oblast[,"bulk.no3dep"] <- NA; oblast[,"bulk.nh4dep"] <- NA
+print("Krok 2 - vypocet bulk depozic")
+
+for (i in c(1:nrow(oblast))) {
+	if (oblast[i,"ALTITUDE"]>0) {oblast[i,"bulk.sdep"] <- oblast[i,"c.so4"] * oblast[i,"SRAZKY"] / 100000
+				    oblast[i,"bulk.no3dep"] <- oblast[i,"c.no3"] * oblast[i,"SRAZKY"] / 100000
+				    oblast[i,"bulk.nh4dep"] <- oblast[i,"c.nh4"] * oblast[i,"SRAZKY"] / 100000}
+
+		}
+
+oblast[,"thf.no3dep"] <- NA; oblast[,"thf.nh4dep"] <- NA
+print("Krok 3 - prepocet depozic z bulk na throughfall")
+
+for (i in c(1:nrow(oblast))) {
+	if (oblast[i,"ALTITUDE"]>0) {oblast[i,"thf.no3dep"] <- oblast[i,"bulk.no3dep"] * 1.69 # 1.69 = pomer througfal koncentarce a koncentrace ve srazkach pro NO3
+				    oblast[i,"thf.nh4dep"] <- oblast[i,"bulk.nh4dep"] * 1.45 * 0.78} # 1.45 = pomer througfal koncentarce a koncentrace ve srazkach pro NH4 | 0.78 = korekce pro mikrobialni transformaci NH4 v korune
+		}
+
+print("Krok 4 - celkova throughfall depozice N")
+for (i in c(1:nrow(oblast))) {
+	oblast[i,"Ndep2"] <- oblast[i,"thf.no3dep"] + oblast[i,"thf.nh4dep"] }
+
+if (prepsat==T) {oblast[,"Ndep"] <- oblast[,"Ndep2"]}
+
+plot(oblast[,"Ndep2"] ~ oblast[,"Ndep"])
+return(oblast)
+}
 
 
 
 ########################################
 #### Mean paper
 
-mean_paper <- readXL("C:/honzaT/aceczechfor/Mean_paper/NEW_Database_byZones_2.xlsx", rownames=FALSE, header=TRUE, na="", sheet="Database_byZones_2", stringsAsFactors=TRUE)
+mean_paper <- readXL("C:/honzaT/aceczechfor/Mean_paper/NEW_oblastbase_byZones_2.xlsx", rownames=FALSE, header=TRUE, na="", sheet="oblastbase_byZones_2", stringsAsFactors=TRUE)
 
-LMa <- lm(TRW_A ~ CO2 + T_35_A + VS_PREC_A + NDEP_A * ZONE, data=mean_paper)
+LMa <- lm(TRW_A ~ CO2 + T_35_A + VS_PREC_A + NDEP_A * ZONE, oblast=mean_paper)
 summary(LMa)
 calc.relimp(LMa, rela=T)
 
-LMb <- lm(TRW_B ~ CO2 + T_35_B + VS_PREC_B + NDEP_B * ZONE, data=mean_paper)
+LMb <- lm(TRW_B ~ CO2 + T_35_B + VS_PREC_B + NDEP_B * ZONE, oblast=mean_paper)
 summary(LMb)
 calc.relimp(LMb, rela=T)
