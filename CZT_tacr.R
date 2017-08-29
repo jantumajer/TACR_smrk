@@ -48,13 +48,9 @@ summary(LM.czt)
 vif(LM.czt)
 calc.relimp(LM.czt, rela=T)
 
-plot(CBAI_0$BAI ~ CBAI_0$NTREESPERHA)
-names(CBAI_0)
+PLOT.MODEL(LM.czt, CBAI_0)
+plot(residuals(LM.czt) ~ CBAI_0$CLAY); abline(0,0, col="red")
 
-par(mfrow=c(2,2))
-plot(residuals(LM.czt) ~ CBAI_0$BAI, xlim=c(0,100), ylim=c(-60,60)); abline(0,0, col="red")
-plot(predict(LM.czt) ~ CBAI_0$BAI, xlim=c(0,100), ylim=c(0,100)); abline(0,1, col="red")
-Hist(residuals(LM.czt), scale="frequency", breaks=100, col="darkgray", xlim=c(-50,50))
 
 ### Srovnani modelu s interakcemi typu : a *
 LM.czt.interakce <- lm(BAI ~ 1 + AGE20YEARS + DBH + ALTITUDECLASS * SRAZKY + ALTITUDECLASS * TEPLOTA + BAL + Rajonizace + Ndep, data=CBAI_0)
@@ -62,7 +58,7 @@ plot(predict(LM.czt) ~ predict(LM.czt.interakce), xlim=c(0,70), ylim=c(0,70)); a
 summary(LM.czt.interakce)
 vif(LM.czt.interakce)
 
-
+names(CBAI_0)
 
 			################################################################
 			############# KRNAP ############################################
@@ -126,21 +122,19 @@ LM.krnap <- lm(BAI ~ 1 + AGE20YEARS + DBH + ALTITUDECLASS : SRAZKY + ALTITUDECLA
 summary(LM.krnap)
 calc.relimp(LM.krnap, rela=T)
 
-par(mfrow=c(2,2))
-plot(residuals(LM.krnap) ~ KRNAP.an$BAI, xlim=c(0,100), ylim=c(-60,60)); abline(0,0, col="red")
-plot(predict(LM.krnap) ~ KRNAP.an$BAI, xlim=c(0,100), ylim=c(0,100)); abline(0,1, col="red")
-Hist(residuals(LM.krnap), scale="frequency", breaks=100, col="darkgray", xlim=c(-50,50))
+PLOT.MODEL(LM.krnap, KRNAP.an)
+
 
 ### Srovnani modelu CZT a KRNAP
 
 par(mfrow=c(2,2))
 plot(predict(LM.krnap) ~ predict(LM.czt, newdata=KRNAP.an), xlim=c(0,80), ylim=c(0,80)); abline(0,1, col="red")
-plot(KRNAP.an$BAI ~ predict(LM.czt, newdata=KRNAP.an), xlim=c(0,80), ylim=c(0,80)); abline(0,1, col="red")
+plot(KRNAP.an$BAI ~ predict(LM.czt, newdata=KRNAP.an), xlim=c(0,80), ylim=c(0,80), main="BAI", xlab="CZT model", ylab="KRNAP model"); abline(0,1, col="red")
 plot(KRNAP.an$BAI ~ predict(LM.krnap), xlim=c(0,80), ylim=c(0,80)); abline(0,1, col="red")
 
 cor(na.omit(predict(LM.krnap)) , na.omit(predict(LM.czt, newdata=KRNAP.an)))
-cor(predict(LM.krnap) , KRNAP.an$BAI, use="complete")
-cor(predict(LM.czt, newdata=KRNAP.an) , KRNAP.an$BAI, use="complete")
+cor(predict(LM.krnap) , KRNAP.an$BAI, use="complete")^2
+cor(predict(LM.czt, newdata=KRNAP.an) , KRNAP.an$BAI, use="complete")^2
 
 
 
@@ -233,11 +227,7 @@ LPB.an <- subset(LPB.an, subset=!(ALTITUDECLASS=="do400m")) # Vsechny 3 plochy p
 LM.lasprobes <- lm(BAI ~ 1 + AGE20YEARS + DBH + ALTITUDECLASS : SRAZKY + ALTITUDECLASS : TEPLOTA + BAL + RAJONIZACE : Ndep, data=LPB.an)
 summary(LM.lasprobes)
 
-
-par(mfrow=c(2,2))
-plot(residuals(LM.lasprobes) ~ LPB.an$BAI, xlim=c(0,100), ylim=c(-60,60)); abline(0,0, col="red")
-plot(predict(LM.lasprobes) ~ LPB.an$BAI, xlim=c(0,100), ylim=c(0,100)); abline(0,1, col="red")
-Hist(residuals(LM.lasprobes), scale="frequency", breaks=100, col="darkgray", xlim=c(-50,50))
+PLOT.MODEL(LM.lasprobes, LPB.an)
 
 
 ### Srovnani modelu CZT, LasProBes a KRNAP
@@ -247,22 +237,84 @@ KRNAP.estimate <- data.frame(summary(LM.krnap)$coef[,c("Estimate", "Pr(>|t|)")])
 srovnani <- merge(CZT.estimate, KRNAP.estimate, by="Atr", all=T); srovnani <- merge(srovnani, LPB.estimate, by="Atr", all=T); colnames(srovnani) <- c("Parametr", "CZT", "CZT.p", "KRNAP", "KRNAP.p", "LASPROBES", "LASPROBES.p")
 
 par(mfrow=c(2,2))
-plot(predict(LM.lasprobes) ~ predict(LM.czt, newdata=LPB.an), xlim=c(0,80), ylim=c(0,80)); abline(0,1, col="red")
+plot(predict(LM.lasprobes) ~ predict(LM.czt, newdata=LPB.an), xlim=c(0,80), ylim=c(0,80), main="BAI", xlab="CZT model", ylab="LasProBes model"); abline(0,1, col="red")
 plot(LPB.an$BAI ~ predict(LM.czt, newdata=LPB.an), xlim=c(0,80), ylim=c(0,80)); abline(0,1, col="red")
 plot(LPB.an$BAI ~ predict(LM.lasprobes), xlim=c(0,80), ylim=c(0,80)); abline(0,1, col="red")
 
 cor(na.omit(predict(LM.lasprobes)) , na.omit(predict(LM.czt, newdata=LPB.an)))
-cor(predict(LM.lasprobes) , LPB.an$BAI, use="complete")
-cor(predict(LM.czt, newdata=LPB.an) , LPB.an$BAI, use="complete")
+cor(predict(LM.lasprobes) , LPB.an$BAI, use="complete")^2
+cor(predict(LM.czt, newdata=LPB.an) , LPB.an$BAI, use="complete")^2
+
+
+########################################################################
+########################### Porostni uroven ############################
+########################################################################
+
+CZT.plot <- aggregate(CBAI_0, by=list(IDPlots = CBAI_0$IDPLOTS), FUN="mean", na.rm=TRUE) # Prumery za kvantitativni promenne
+KRNAP.plot <- aggregate(KRNAP.an, by=list(IDPlots = KRNAP.an$IDPlots), FUN="mean", na.rm=TRUE)
+LPB.plot <- aggregate(LPB.an, by=list(IDPlots = LPB.an$IDPlots), FUN="mean", na.rm=TRUE)
+
+nahrada <- c("IDPlots", "RAJONIZACE", "ALTITUDECLASS", "AGE20YEARS"); promenne <- c("IDPlots", "BAI", "BAL", "SRAZKY", "TEPLOTA", "Ndep", "DBH")
+
+CZT.plot1 <- merge(CZT.plot[promenne], aggregate(CBAI_0[c("IDPLOTS", "RAJONIZACE", "ALTITUDECLASS", "AGE20YEARS")], by=list(CBAI_0$IDPLOTS), FUN=MODE), by.x="IDPlots", by.y="IDPLOTS", all.x=T) # NA hodnoty u faktoru nahrazuji nejcastejsimi hodnotami na dane plose
+KRNAP.plot1 <- merge(KRNAP.plot[promenne], aggregate(KRNAP.an[nahrada], by=list(KRNAP.an$IDPlots), FUN=MODE), by="IDPlots", all.x=T)
+LPB.plot1 <- merge(LPB.plot[promenne], aggregate(LPB.an[nahrada], by=list(LPB.an$IDPlots), FUN=MODE), by="IDPlots", all.x=T)
+
+vahy.CZT <- aggregate(CBAI_0["IDPLOTS"], by=list(IDPlots = CBAI_0$IDPLOTS), FUN="length"); colnames(vahy.CZT) <- c("IDPlots", "N") # Vahy v modelu - pocet stromu na jednotlivych plochach
+vahy.KRNAP <- aggregate(KRNAP.an["IDPlots"], by=list(IDPlots = KRNAP.an$IDPlots), FUN="length"); colnames(vahy.KRNAP) <- c("IDPlots", "N")
+vahy.LPB <- aggregate(LPB.an["IDPlots"], by=list(IDPlots = LPB.an$IDPlots), FUN="length"); colnames(vahy.LPB) <- c("IDPlots", "N")
+
+CZT.plot2 <- merge(CZT.plot1, vahy.CZT, by="IDPlots", all.x=T)
+KRNAP.plot2 <- merge(KRNAP.plot1, vahy.KRNAP, by="IDPlots", all.x=T)
+LPB.plot2 <- merge(LPB.plot1, vahy.LPB, by="IDPlots", all.x=T)
+
+
+LM.czt.plot <- lm(BAI ~ 1 + AGE20YEARS + DBH + ALTITUDECLASS : SRAZKY + ALTITUDECLASS : TEPLOTA + BAL + RAJONIZACE : Ndep, weights=N, data=CZT.plot2)
+summary(LM.czt.plot)
+PLOT.MODEL(LM.czt.plot, CZT.plot1)
+
+LM.krnap.plot <- lm(BAI ~ 1 + AGE20YEARS + DBH + ALTITUDECLASS : SRAZKY + ALTITUDECLASS : TEPLOTA + BAL + RAJONIZACE : Ndep, weights=N, data=KRNAP.plot2)
+summary(LM.krnap.plot)
+PLOT.MODEL(LM.krnap.plot, KRNAP.plot1)
+
+LM.lpb.plot <- lm(BAI ~ 1 + AGE20YEARS + DBH + ALTITUDECLASS : SRAZKY + ALTITUDECLASS : TEPLOTA + BAL + RAJONIZACE : Ndep, weights=N, data=LPB.plot2)
+summary(LM.lpb.plot)
+PLOT.MODEL(LM.lpb.plot, LPB.plot1)
+
+### Srovnani modelu CZT a KRNAP
+
+cor(na.omit(predict(LM.krnap.plot)) , na.omit(predict(LM.czt.plot, newdata=KRNAP.plot2)))
+cor(predict(LM.krnap.plot) , KRNAP.plot2$BAI, use="complete")^2
+cor(predict(LM.czt.plot, newdata=KRNAP.plot2) , KRNAP.plot2$BAI, use="complete")^2
+
+par(mfrow=c(2,2))
+plot(predict(LM.krnap.plot) ~ predict(LM.czt.plot, newdata=KRNAP.plot1), xlim=c(0,50), ylim=c(0,50), main="BAI", xlab="CZT model", ylab="KRNAP model"); abline(0,1, col="red")
+plot(KRNAP.plot1$BAI ~ predict(LM.czt.plot, newdata=KRNAP.plot1), xlim=c(0,50), ylim=c(0,50)); abline(0,1, col="red")
+plot(KRNAP.plot1$BAI ~ predict(LM.krnap.plot), xlim=c(0,50), ylim=c(0,50)); abline(0,1, col="red")
+
+### Srovnani modelu CZT a LasProBes
+
+cor(na.omit(predict(LM.lpb.plot)) , na.omit(predict(LM.czt.plot, newdata=LPB.plot2)))
+cor(predict(LM.lpb.plot) , LPB.plot2$BAI, use="complete")^2
+cor(predict(LM.czt.plot, newdata=LPB.plot2) , LPB.plot2$BAI, use="complete")^2
+
+par(mfrow=c(2,2))
+plot(predict(LM.lpb.plot) ~ predict(LM.czt.plot, newdata=LPB.plot1), xlim=c(0,30), ylim=c(0,30), main="BAI", xlab="CZT model", ylab="LasProBes model"); abline(0,1, col="red")
+plot(LPB.plot1$BAI ~ predict(LM.czt.plot, newdata=LPB.plot1), xlim=c(0,50), ylim=c(0,50)); abline(0,1, col="red")
+plot(LPB.plot1$BAI ~ predict(LM.lpb.plot), xlim=c(0,50), ylim=c(0,50)); abline(0,1, col="red")
+
+###############################################################################################################################################################################
+### Funkce
+###############################################################################################################################################################################
 
 
 ################################################################################
 ### Vypocet celkove throughfall depozice podle Oulehle et al. (2016) a Kopacek et al. (2012)
 ################################################################################
 
-DEPOZICE(LPB.an)
+LPB.an <- DEPOZICE(LPB.an, prepsat=T)
 KRNAP.an <- DEPOZICE(KRNAP.an, prepsat=T)
-CBAI_0$SRAZKY <- CBAI_0$ANN_SRA; DEPOZICE(CBAI_0)
+CBAI_0$SRAZKY <- CBAI_0$ANN_SRA; CBAI_0$TEPLOTA <- CBAI_0$ANN_T; CBAI_0 <- DEPOZICE(CBAI_0, prepsat=T)
 
 
 
@@ -306,16 +358,26 @@ return(oblast)
 }
 
 
+##################################################################
+### Funkce pro ziskani nejcastejsi hodnoty faktoru pri agregaci
+# Nutne pouzit, protoze na nekterych plochach CZT a LPB jsou ruzne stare stromy
+# Prevzato od uzivatele Jay ze StackOverflow
+##################################################################
 
-########################################
-#### Mean paper
+MODE <- function(x) {
+	ux <- unique(x)
+	ux[which.max(tabulate(match(x, ux)))]
+	}
 
-mean_paper <- readXL("C:/honzaT/aceczechfor/Mean_paper/NEW_oblastbase_byZones_2.xlsx", rownames=FALSE, header=TRUE, na="", sheet="oblastbase_byZones_2", stringsAsFactors=TRUE)
+###################################################################
+### Vykresleni grafu
+###################################################################
 
-LMa <- lm(TRW_A ~ CO2 + T_35_A + VS_PREC_A + NDEP_A * ZONE, oblast=mean_paper)
-summary(LMa)
-calc.relimp(LMa, rela=T)
+PLOT.MODEL <- function(model, data) {
+	par(mfrow=c(2,2))
+	plot(residuals(model) ~ data$BAI, xlab="pozorovany BAI", ylab="residual", xlim=c(0,100), ylim=c(-40,40)); abline(0,0, col="red")
+	plot(predict(model) ~ data$BAI, xlab="pozorovany BAI", ylab="modelovany BAI", xlim=c(0,100), ylim=c(0,100)); abline(0,1, col="red")
+	Hist(residuals(model), scale="frequency", breaks=50, col="darkgray", xlim=c(-50,50), xlab="residual")
+	}
 
-LMb <- lm(TRW_B ~ CO2 + T_35_B + VS_PREC_B + NDEP_B * ZONE, oblast=mean_paper)
-summary(LMb)
-calc.relimp(LMb, rela=T)
+
