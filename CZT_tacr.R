@@ -28,7 +28,7 @@ Hist(CBAI_0$CBAI, scale="frequency", breaks="Sturges", col="darkgray")
 
 ### Prejmenovani promennych
 ########################################
-names(CBAI_0)[c(26,198,146,60,100,99,12)] <- c("ALTITUDE","BAL","BAI","Ndep","SRAZKY","TEPLOTA","DBH")
+names(CBAI_0)[c(26,198,146,60,103,102,12)] <- c("ALTITUDE","BAL","BAI","Ndep","SRAZKY","TEPLOTA","DBH")
 
 
 ### Konverze veku a nadmorske vysky na faktory
