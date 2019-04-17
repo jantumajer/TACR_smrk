@@ -126,6 +126,12 @@ for (i in c(1:nrow(pomocne))) {
 
 		}
 
+print("Mezikrok 1.5 - vypocet troughfall koncentraci iontu SO4 ve srazkove vode")
+for (i in c(1:nrow(pomocne))) {
+	pomocne[i,"c.so4thf"] <- NA
+	if (pomocne[i,"ALTITUDE"]>0) {pomocne[i,"c.so4thf"] <- 10*exp(1.557 + 1.165 * log(pomocne[i,"c.so4"]) - 3.57e-4*pomocne[i,"PRECIPITATION"] + 8.941e-7*pomocne[i,"X"])
+		}	
+	
 pomocne[,"bulk.sdep"] <- NA; pomocne[,"bulk.no3dep"] <- NA; pomocne[,"bulk.nh4dep"] <- NA
 print("Krok 2 - vypocet bulk depozic")
 
@@ -144,11 +150,19 @@ for (i in c(1:nrow(pomocne))) {
 				    pomocne[i,"thf.nh4dep"] <- pomocne[i,"bulk.nh4dep"] * 1.45 * 0.78} # 1.45 = pomer througfall koncentarce a koncentrace ve srazkach pro NH4 | 0.78 = korekce pro mikrobialni transformaci NH4 v korune
 		}
 
+print("Mezikrok 3.5 - troughfall koncentrace siry na througfall depozici")
+pomocne[i,"thf.so4dep"] <- NA
+	
+for (i in c(1:nrow(pomocne))) {
+	if (pomocne[i,"ALTITUDE"]>0) {pomocne[i,"thf.so4dep"] <- pomocne[i,"c.so4thf"] * pomocne[i,"PRECIPITATION"] / 100000
+				    }
+	
 print("Krok 4 - celkova throughfall depozice N")
 for (i in c(1:nrow(pomocne))) {
 	pomocne[i,"Ndep"] <- pomocne[i,"thf.no3dep"] + pomocne[i,"thf.nh4dep"] }
 
 Dataset[,"NDEP"] <- pomocne[,"Ndep"]
+Dataset[,"SDEP"] <- pomocne[i,"thf.so4dep"] 
 
 return(Dataset)
 }
