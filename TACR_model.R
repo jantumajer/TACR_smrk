@@ -165,6 +165,8 @@ Dataset[,"NDEP"] <- pomocne[,"Ndep"]
 Dataset[,"SDEP"] <- pomocne[i,"thf.so4dep"] 
 
 return(Dataset)
+		}
+	}
 }
 
 
