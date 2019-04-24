@@ -127,9 +127,10 @@ for (i in c(1:nrow(pomocne))) {
 		}
 
 print("Mezikrok 1.5 - vypocet troughfall koncentraci iontu SO4 ve srazkove vode")
+pomocne[i,"c.so4thf"] <- NA
+
 for (i in c(1:nrow(pomocne))) {
-	pomocne[i,"c.so4thf"] <- NA
-	if (pomocne[i,"ALTITUDE"]>0) {pomocne[i,"c.so4thf"] <- 10*exp(1.557 + 1.165 * log(pomocne[i,"c.so4"]) - 3.57e-4*pomocne[i,"PRECIPITATION"] + 8.941e-7*pomocne[i,"X"])
+	if (pomocne[i,"ALTITUDE"]>0) {pomocne[i,"c.so4thf"] <- 10*exp(1.557 + 1.165 * log10(pomocne[i,"c.so4"]) - 3.57e-4*pomocne[i,"PRECIPITATION"] + 8.941e-7*pomocne[i,"X"])}
 		}	
 	
 pomocne[,"bulk.sdep"] <- NA; pomocne[,"bulk.no3dep"] <- NA; pomocne[,"bulk.nh4dep"] <- NA
@@ -154,7 +155,7 @@ print("Mezikrok 3.5 - troughfall koncentrace siry na througfall depozici")
 pomocne[i,"thf.so4dep"] <- NA
 	
 for (i in c(1:nrow(pomocne))) {
-	if (pomocne[i,"ALTITUDE"]>0) {pomocne[i,"thf.so4dep"] <- pomocne[i,"c.so4thf"] * pomocne[i,"PRECIPITATION"] / 100000
+	if (pomocne[i,"ALTITUDE"]>0) {pomocne[i,"thf.so4dep"] <- pomocne[i,"c.so4thf"] * pomocne[i,"PRECIPITATION"] / 100000}
 				    }
 	
 print("Krok 4 - celkova throughfall depozice N")
@@ -162,12 +163,12 @@ for (i in c(1:nrow(pomocne))) {
 	pomocne[i,"Ndep"] <- pomocne[i,"thf.no3dep"] + pomocne[i,"thf.nh4dep"] }
 
 Dataset[,"NDEP"] <- pomocne[,"Ndep"]
-Dataset[,"SDEP"] <- pomocne[i,"thf.so4dep"] 
+Dataset[,"SDEP"] <- pomocne["thf.so4dep"] 
 
 return(Dataset)
-		}
-	}
 }
+
+
 
 
 ##################### Uzivatelska funkce - pripravi vse #############################
